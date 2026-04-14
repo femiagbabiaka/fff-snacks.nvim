@@ -1,24 +1,5 @@
 local config = require "fff-snacks.config"
 
-local init = vim.schedule_wrap(function()
-  if Snacks and pcall(require, "snacks.picker") then
-    -- Users can call Snacks.picker.fff() after this
-    Snacks.picker.sources.fff = require("fff-snacks").sources.find_files
-    Snacks.picker.sources.fff_live_grep = require("fff-snacks").sources.live_grep
-  end
-end)
-
-if vim.v.vim_did_enter == 1 then
-  init()
-else
-  vim.api.nvim_create_autocmd("UIEnter", {
-    group = vim.api.nvim_create_augroup("fff-snacks.init", {}),
-    once = true,
-    nested = true,
-    callback = init,
-  })
-end
-
 vim.api.nvim_create_user_command("FFFSnacks", function(args)
   if not (Snacks and pcall(require, "snacks.picker")) then
     vim.notify("fff-snacks: Snacks is not loaded", vim.log.levels.ERROR)
@@ -26,20 +7,15 @@ vim.api.nvim_create_user_command("FFFSnacks", function(args)
   end
 
   local cmd = args.fargs[1] or "find_files"
-  local opts
 
   if cmd == "find_files" then
-    opts = config.merge_opts("find_files", {})
-    Snacks.picker.fff(opts)
+    Snacks.picker.pick(config.make_opts("find_files", {}))
   elseif cmd == "live_grep" then
-    opts = config.merge_opts("live_grep", { grep_mode = { "plain", "regex", "fuzzy" } })
-    Snacks.picker.fff_live_grep(opts)
+    Snacks.picker.pick(config.make_opts("live_grep", { grep_mode = { "plain", "regex", "fuzzy" } }))
   elseif cmd == "fuzzy" then
-    opts = config.merge_opts("live_grep", { grep_mode = { "fuzzy", "regex", "plain" } })
-    Snacks.picker.fff_live_grep(opts)
+    Snacks.picker.pick(config.make_opts("live_grep", { grep_mode = { "fuzzy", "regex", "plain" } }))
   elseif cmd == "grep_word" then
-    opts = config.merge_opts("grep_word", {})
-    Snacks.picker.fff_live_grep(vim.tbl_deep_extend("force", opts, {
+    Snacks.picker.pick(config.make_opts("grep_word", {
       search = function(picker)
         return picker:word()
       end,

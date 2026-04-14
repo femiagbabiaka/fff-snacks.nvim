@@ -2,14 +2,6 @@
 
 ---@module 'fff_snacks'
 
----@class snacks.picker.sources.Config
----@field fff snacks.picker.Config
----@field fff_live_grep fff_snacks.GrepConfig
-
----@class snacks.picker
----@field fff fun(opts?: snacks.picker.Config): snacks.Picker
----@field fff_live_grep fun(opts?: fff_snacks.GrepConfig): snacks.Picker
-
 ---@alias fff_snacks.GrepMode "plain" | "regex" | "fuzzy"
 
 ---@class fff_snacks.GrepConfig: snacks.picker.Config
@@ -23,37 +15,38 @@
 
 local config = require "fff-snacks.config"
 
-return {
-  sources = {
-    find_files = require("fff-snacks.find_files").source,
-    live_grep = require("fff-snacks.live_grep").source,
-  },
+local M = {}
 
-  ---Setup fff-snacks with default options
-  ---@param opts? fff_snacks.Config
-  setup = function(opts)
-    config.setup(opts)
-  end,
-
-  ---@param opts? snacks.picker.Config
-  find_files = function(opts)
-    opts = config.merge_opts("find_files", opts)
-    Snacks.picker.fff(opts)
-  end,
-
-  ---@param opts? fff_snacks.GrepConfig
-  live_grep = function(opts)
-    opts = config.merge_opts("live_grep", opts)
-    Snacks.picker.fff_live_grep(opts)
-  end,
-
-  ---@param opts? fff_snacks.GrepConfig
-  grep_word = function(opts)
-    opts = config.merge_opts("grep_word", opts)
-    Snacks.picker.fff_live_grep(vim.tbl_deep_extend("force", opts or {}, {
-      search = function(picker)
-        return picker:word()
-      end,
-    }))
-  end,
+M.sources = {
+  find_files = require("fff-snacks.find_files").source,
+  live_grep = require("fff-snacks.live_grep").source,
 }
+
+---Setup fff-snacks with default options
+---@param opts? fff_snacks.Config
+function M.setup(opts)
+  config.setup(opts)
+end
+
+---@param opts? snacks.picker.Config
+function M.find_files(opts)
+  Snacks.picker.pick(config.make_opts("find_files", opts))
+end
+
+---@param opts? fff_snacks.GrepConfig
+function M.live_grep(opts)
+  Snacks.picker.pick(config.make_opts("live_grep", opts))
+end
+
+---@param opts? fff_snacks.GrepConfig
+function M.grep_word(opts)
+  local picker_opts = config.make_opts("grep_word", opts)
+  picker_opts = vim.tbl_deep_extend("force", picker_opts or {}, {
+    search = function(picker)
+      return picker:word()
+    end,
+  })
+  Snacks.picker.pick(picker_opts)
+end
+
+return M

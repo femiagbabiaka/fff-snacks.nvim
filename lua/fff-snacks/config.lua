@@ -12,6 +12,12 @@ local config = {
   grep_word = nil,
 }
 
+---@type table<string, snacks.picker.Config>
+local sources = {
+  find_files = require("fff-snacks.find_files").source,
+  live_grep = require("fff-snacks.live_grep").source,
+}
+
 ---@param opts? fff_snacks.Config
 function M.setup(opts)
   if not opts then
@@ -29,21 +35,19 @@ end
 
 ---@param func_type "find_files" | "live_grep" | "grep_word"
 ---@param runtime_opts? table
----@return table
-function M.merge_opts(func_type, runtime_opts)
+---@return snacks.picker.Config
+function M.make_opts(func_type, runtime_opts)
   runtime_opts = runtime_opts or {}
   local defaults = config[func_type]
+  local source = sources[func_type] or sources.live_grep
 
   -- grep_word falls back to live_grep if not explicitly set
   if func_type == "grep_word" and defaults == nil then
     defaults = config.live_grep
   end
 
-  if defaults then
-    return vim.tbl_deep_extend("force", defaults, runtime_opts)
-  end
-
-  return runtime_opts
+  -- Merge: source + defaults + runtime_opts
+  return vim.tbl_deep_extend("force", source, defaults or {}, runtime_opts)
 end
 
 return M

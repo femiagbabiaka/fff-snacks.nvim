@@ -127,7 +127,7 @@ M.source = {
   win = {
     input = {
       keys = {
-        ["<c-y>"] = { "cycle_grep_mode", mode = { "n", "i" }, nowait = true },
+        ["<S-Tab>"] = { "cycle_grep_mode", mode = { "n", "i" }, nowait = true },
       },
     },
   },
