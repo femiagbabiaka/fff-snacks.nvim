@@ -1,3 +1,5 @@
+local config = require "fff-snacks.config"
+
 local init = vim.schedule_wrap(function()
   if Snacks and pcall(require, "snacks.picker") then
     -- Users can call Snacks.picker.fff() after this
@@ -18,18 +20,32 @@ else
 end
 
 vim.api.nvim_create_user_command("FFFSnacks", function(args)
-  if Snacks and pcall(require, "snacks.picker") then
-    if args.fargs[1] == "find_files" or args.fargs[1] == nil then
-      Snacks.picker.fff()
-    elseif args.fargs[1] == "live_grep" then
-      Snacks.picker.fff_live_grep { grep_mode = { "plain", "regex", "fuzzy" } }
-    elseif args.fargs[1] == "fuzzy" then
-      Snacks.picker.fff_live_grep { grep_mode = { "fuzzy", "regex", "plain" } }
-    else
-      vim.notify("fff-snacks: Invalid argument. Use 'find_files', 'live_grep', or 'fuzzy'", vim.log.levels.ERROR)
-    end
-  else
+  if not (Snacks and pcall(require, "snacks.picker")) then
     vim.notify("fff-snacks: Snacks is not loaded", vim.log.levels.ERROR)
+    return
+  end
+
+  local cmd = args.fargs[1] or "find_files"
+  local opts
+
+  if cmd == "find_files" then
+    opts = config.merge_opts("find_files", {})
+    Snacks.picker.fff(opts)
+  elseif cmd == "live_grep" then
+    opts = config.merge_opts("live_grep", { grep_mode = { "plain", "regex", "fuzzy" } })
+    Snacks.picker.fff_live_grep(opts)
+  elseif cmd == "fuzzy" then
+    opts = config.merge_opts("live_grep", { grep_mode = { "fuzzy", "regex", "plain" } })
+    Snacks.picker.fff_live_grep(opts)
+  elseif cmd == "grep_word" then
+    opts = config.merge_opts("grep_word", {})
+    Snacks.picker.fff_live_grep(vim.tbl_deep_extend("force", opts, {
+      search = function(picker)
+        return picker:word()
+      end,
+    }))
+  else
+    vim.notify("fff-snacks: Invalid argument. Use 'find_files', 'live_grep', 'fuzzy', or 'grep_word'", vim.log.levels.ERROR)
   end
 end, {
   nargs = "?",
@@ -38,6 +54,7 @@ end, {
       "find_files",
       "live_grep",
       "fuzzy",
+      "grep_word",
     }
   end,
   desc = "Open FFF in snacks picker",

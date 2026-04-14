@@ -21,21 +21,35 @@
 ---@class fff_snacks.GrepPicker: snacks.Picker
 ---@field opts fff_snacks.GrepConfig
 
+local config = require "fff-snacks.config"
+
 return {
   sources = {
     find_files = require("fff-snacks.find_files").source,
     live_grep = require("fff-snacks.live_grep").source,
   },
+
+  ---Setup fff-snacks with default options
+  ---@param opts? fff_snacks.Config
+  setup = function(opts)
+    config.setup(opts)
+  end,
+
   ---@param opts? snacks.picker.Config
   find_files = function(opts)
+    opts = config.merge_opts("find_files", opts)
     Snacks.picker.fff(opts)
   end,
+
   ---@param opts? fff_snacks.GrepConfig
   live_grep = function(opts)
+    opts = config.merge_opts("live_grep", opts)
     Snacks.picker.fff_live_grep(opts)
   end,
+
   ---@param opts? fff_snacks.GrepConfig
   grep_word = function(opts)
+    opts = config.merge_opts("grep_word", opts)
     Snacks.picker.fff_live_grep(vim.tbl_deep_extend("force", opts or {}, {
       search = function(picker)
         return picker:word()
